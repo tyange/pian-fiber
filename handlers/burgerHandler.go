@@ -25,6 +25,18 @@ func GetBurger(c *fiber.Ctx) error {
 	return c.Status(200).JSON(burger)
 }
 
+func AddBurger(c *fiber.Ctx) error {
+	burger := models.Burger{}
+
+	if c.BodyParser(&burger) != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "입력하려는 데이터에 오류가 있습니다."})
+	}
+
+	database.DBConn.Save(&burger)
+
+	return c.Status(200).JSON(burger)
+}
+
 func EditBurger(c *fiber.Ctx) error {
 	burger := models.Burger{}
 	updatedBurger := models.Burger{}
@@ -45,4 +57,17 @@ func EditBurger(c *fiber.Ctx) error {
 	database.DBConn.Save(&burger)
 
 	return c.Status(200).JSON(burger)
+}
+
+func DeleteBurger(c *fiber.Ctx) error {
+	burger := models.Burger{}
+	id := c.Params("id")
+
+	if database.DBConn.First(&burger, id) == nil {
+		return c.Status(400).JSON(fiber.Map{"error": "삭제하려는 버거를 찾지 못했습니다."})
+	}
+
+	database.DBConn.Delete(&burger)
+
+	return c.Status(200).JSON(fiber.Map{"message": "버거를 삭제했습니다."})
 }
