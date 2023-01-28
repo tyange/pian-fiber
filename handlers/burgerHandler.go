@@ -1,11 +1,12 @@
 package handlers
 
 import (
+	"math"
+	"strconv"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/tyange/pian-fiber/database"
 	"github.com/tyange/pian-fiber/models"
-	"math"
-	"strconv"
 )
 
 type Pagination struct {
@@ -39,9 +40,20 @@ func GetAllBurger(c *fiber.Ctx) error {
 
 	database.DBConn.Limit(6).Offset(offset).Find(&burgers)
 
+	var prevPage = page - 1
+	var nextPage = page + 1
+
+	if page <= 1 {
+		prevPage = 1
+	}
+
+	if page >= int(totalPages) {
+		nextPage = int(totalPages) + 1
+	}
+
 	return c.Status(200).JSON(BurgersData{Burgers: burgers, PageData: Pagination{
-		NextPage:     page + 1,
-		PreviousPage: page - 1,
+		NextPage:     nextPage,
+		PreviousPage: prevPage,
 		CurrentPage:  page,
 		TotalPages:   int(totalPages),
 	}})
