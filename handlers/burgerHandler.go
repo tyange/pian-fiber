@@ -4,14 +4,47 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/tyange/pian-fiber/database"
 	"github.com/tyange/pian-fiber/models"
+	"math"
+	"strconv"
 )
+
+type Pagination struct {
+	NextPage     int
+	PreviousPage int
+	CurrentPage  int
+	TotalPages   int
+}
+
+type BurgersData struct {
+	Burgers  []models.Burger
+	PageData Pagination
+}
 
 func GetAllBurger(c *fiber.Ctx) error {
 	var burgers []models.Burger
 
-	database.DBConn.Find(&burgers)
+	perPage := 6
+	page := 1
+	pageStr := c.Query("page")
 
-	return c.Status(200).JSON(burgers)
+	if pageStr != "" {
+		page, _ = strconv.Atoi(pageStr)
+	}
+
+	var totalBurger int64
+	database.DBConn.Model(&models.Burger{}).Count(&totalBurger)
+	totalPages := math.Ceil(float64(totalBurger / int64(perPage)))
+
+	offset := (page - 1) * perPage
+
+	database.DBConn.Limit(6).Offset(offset).Find(&burgers)
+
+	return c.Status(200).JSON(BurgersData{Burgers: burgers, PageData: Pagination{
+		NextPage:     page + 1,
+		PreviousPage: page - 1,
+		CurrentPage:  page,
+		TotalPages:   int(totalPages),
+	}})
 }
 
 func GetBurger(c *fiber.Ctx) error {
