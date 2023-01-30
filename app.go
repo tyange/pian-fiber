@@ -9,6 +9,7 @@ import (
 
 func setUpRoutes(app *fiber.App) {
 	routes.SetBurgerRoutes(app)
+	routes.SetUserRoutes(app)
 }
 
 func main() {

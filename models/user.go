@@ -10,3 +10,7 @@ type User struct {
 	Name  string
 	Email string `gorm:"unique"`
 }
+
+type Credential struct {
+	CredentialString string
+}
