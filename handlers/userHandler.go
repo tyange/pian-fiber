@@ -2,17 +2,19 @@ package handlers
 
 import (
 	"context"
-	"fmt"
 	"os"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/joho/godotenv"
+	"github.com/tyange/pian-fiber/database"
 	"github.com/tyange/pian-fiber/models"
 	"google.golang.org/api/idtoken"
 )
 
 func VerifyingCredential(c *fiber.Ctx) error {
-	err := godotenv.Load()
+	godotenv.Load()
+
+	session, err := database.SessionStore.Get(c)
 
 	if err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "GOOGLE CLIENT ID를 불러오지 못했습니다."})
@@ -30,7 +32,20 @@ func VerifyingCredential(c *fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"error": "토큰을 인증할 수 없습니다."})
 	}
 
-	fmt.Print(payload.Claims)
+	claims := payload.Claims
+	user := models.User{}
+	result := database.DBConn.First(&user, "email = ?", claims["email"])
 
-	return c.JSON(credential)
+	if result.Error != nil {
+		user.Iss = claims["iss"].(string)
+		user.Email = claims["email"].(string)
+		user.Name = claims["name"].(string)
+
+		database.DBConn.Save(&user)
+	}
+
+	session.Set("pian-login", true)
+	session.Save()
+
+	return c.Status(200).JSON(payload.Claims)
 }
