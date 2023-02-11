@@ -8,16 +8,41 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/tyange/pian-fiber/database"
 	"github.com/tyange/pian-fiber/models"
+	"github.com/tyange/pian-fiber/store"
 	"google.golang.org/api/option"
 	"os"
 )
+
+func AuthMiddleware() fiber.Handler {
+	return LoginMiddleware
+}
+
+func LoginMiddleware(c *fiber.Ctx) error {
+	sess, err := store.Store.Get(c)
+	if err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "세션을 불러오지 못했습니다."})
+
+	}
+
+	text := sess.Get("pian_login")
+
+	fmt.Println(text)
+
+	if sess.Get("pian_login") == nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"message": "not authorized",
+		})
+	}
+
+	return c.Next()
+}
 
 func VerifyingGoogleAuthProviderForFirebase(c *fiber.Ctx) error {
 	if godotenv.Load() != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "environment를 불러오지 못했습니다."})
 	}
 
-	session, err := database.SessionStore.Get(c)
+	session, err := store.Store.Get(c)
 
 	if err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "GOOGLE CLIENT ID를 불러오지 못했습니다."})
@@ -47,8 +72,6 @@ func VerifyingGoogleAuthProviderForFirebase(c *fiber.Ctx) error {
 
 	userEmail := userData.Claims["email"].(string)
 
-	fmt.Println(userEmail)
-
 	user := models.User{}
 	result := database.DBConn.First(&user, "email = ?", userEmail)
 
@@ -60,7 +83,7 @@ func VerifyingGoogleAuthProviderForFirebase(c *fiber.Ctx) error {
 		database.DBConn.Save(&user)
 	}
 
-	session.Set("pian-login", true)
+	session.Set("pian_login", "true")
 
 	if session.Save() != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "세션 정보 저장에 실패했습니다."})
