@@ -6,7 +6,7 @@ import (
 )
 
 func SetBurgerRoutes(app *fiber.App) {
-	app.Get("/burger", handlers.AuthMiddleware(), handlers.GetAllBurger)
+	app.Get("/burger", handlers.GetAllBurger)
 	app.Get("/burger/:id", handlers.GetBurger)
 	app.Post("/burger", handlers.AddBurger)
 	app.Put("/burger/:id", handlers.EditBurger)
