@@ -10,6 +10,28 @@ import (
 	"os"
 )
 
+func VerifyToken(c *fiber.Ctx) error {
+	header := c.GetReqHeaders()
+
+	opt := option.WithAPIKey(os.Getenv("FIREBASE_API_KEY"))
+
+	config := &firebase.Config{ProjectID: "pian-firebase-auth"}
+
+	app, err := firebase.NewApp(context.Background(), config, opt)
+
+	client, err := app.Auth(context.Background())
+	if err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "auth client 생성에 실패했습니다."})
+	}
+
+	_, err = client.VerifyIDToken(context.Background(), header["Authorization"])
+	if err != nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "인증되지 않은 유저입니다."})
+	}
+
+	return c.Next()
+}
+
 func VerifyingGoogleAuthProviderForFirebase(c *fiber.Ctx) error {
 	if godotenv.Load() != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "GOOGLE CLIENT ID를 불러오지 못했습니다."})
@@ -25,7 +47,7 @@ func VerifyingGoogleAuthProviderForFirebase(c *fiber.Ctx) error {
 
 	config := &firebase.Config{ProjectID: "pian-firebase-auth"}
 
-	app, err := firebase.NewApp(context.Background(), config, opt)
+	app, _ := firebase.NewApp(context.Background(), config, opt)
 
 	client, err := app.Auth(context.Background())
 	if err != nil {
