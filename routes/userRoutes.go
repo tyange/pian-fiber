@@ -6,5 +6,5 @@ import (
 )
 
 func SetUserRoutes(app *fiber.App) {
-	app.Post("/user/google-auth", handlers.VerifyingCredential)
+	app.Post("/user/google-auth", handlers.VerifyingGoogleAuthProviderForFirebase)
 }

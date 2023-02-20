@@ -2,21 +2,16 @@ package database
 
 import (
 	"fmt"
-	"log"
-	"os"
-	"time"
-
-	"github.com/gofiber/fiber/v2/middleware/session"
-	mysqlStorage "github.com/gofiber/storage/mysql"
 	"github.com/joho/godotenv"
 	"github.com/tyange/pian-fiber/models"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
+	"log"
+	"os"
 )
 
 var (
-	DBConn       *gorm.DB
-	SessionStore *session.Store
+	DBConn *gorm.DB
 )
 
 func ConnectDb() {
@@ -36,18 +31,6 @@ func ConnectDb() {
 	if db.AutoMigrate(&models.Burger{}, &models.User{}) != nil {
 		log.Fatal("Failed DB auto migration.")
 	}
-
-	DBforSql, _ := db.DB()
-
-	store := mysqlStorage.New(mysqlStorage.Config{
-		Db:         DBforSql,
-		Reset:      false,
-		GCInterval: 10 * time.Second,
-	})
-
-	SessionStore = session.New(session.Config{
-		Storage: store,
-	})
 
 	DBConn = db
 }
