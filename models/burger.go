@@ -10,4 +10,5 @@ type Burger struct {
 	Name        string
 	Brand       string
 	Description string
+	UserId      string
 }
